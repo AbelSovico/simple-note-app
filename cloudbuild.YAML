@@ -1,0 +1,51 @@
+# Cloud Build Pipeline Configuration for Simple Quote Generator
+
+steps:
+# Building Frontend Docker Image 
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'Build Frontend Image'
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/frontend-app:latest', './frontend']
+
+# Building Backend Docker Image 
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'Build Backend Image'
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/backend-api:latest', './backend']
+
+# Pushing Frontend Image to Google Artifact Registry
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'Push Frontend Image'
+  args: ['push', 'gcr.io/$PROJECT_ID/frontend-app:latest']
+
+# Pushing Backend Image to Google Artifact Registry 
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'Push Backend Image'
+  args: ['push', 'gcr.io/$PROJECT_ID/backend-api:latest']
+
+# Deploying Frontend to Cloud Run 
+- name: 'gcr.io/cloud-builders/gcloud'
+  id: 'Deploy Frontend to Cloud Run'
+  args:
+  - 'run'
+  - 'deploy'
+  - 'simple-quote-frontend'
+  - '--image=gcr.io/$PROJECT_ID/frontend-app:latest'
+  - '--region=us-central1'
+  - '--platform=managed'
+  - '--allow-unauthenticated'
+
+# Deploying Backend API to Cloud Run 
+- name: 'gcr.io/cloud-builders/gcloud'
+  id: 'Deploy Backend to Cloud Run'
+  args:
+  - 'run'
+  - 'deploy'
+  - 'simple-quote-backend'
+  - '--image=gcr.io/$PROJECT_ID/backend-api:latest'
+  - '--region=us-central1'
+  - '--platform=managed'
+  - '--allow-unauthenticated'
+
+# Configuring Artifact Registry for Image Build/Push
+images:
+- 'gcr.io/$PROJECT_ID/frontend-app:latest'
+- 'gcr.io/$PROJECT_ID/backend-api:latest'
